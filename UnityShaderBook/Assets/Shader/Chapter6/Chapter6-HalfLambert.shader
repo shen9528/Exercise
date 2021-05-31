@@ -1,4 +1,4 @@
-﻿Shader "Unity Shaders Book/Chapter 6/Diffuse Vertex-Level"
+﻿Shader "Unity Shaders Book/Chapter 6/HalfLambert"
 {
     Properties
     {
@@ -26,22 +26,25 @@
             
             struct v2f {
                 float4 pos : SV_POSITION;
-                float3 color : COLOR0;
+                float3 worldNormal : TEXCOORD0;
             };
             
             v2f vert(a2v v) {
                 v2f o;
                 o.pos = UnityObjectToClipPos(v.vertex);
-                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
-                fixed3 worldNormal = normalize(UnityObjectToWorldNormal(v.normal));
-                fixed3 worldLight = normalize(_WorldSpaceLightPos0.xyz);
-                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * saturate(dot(worldNormal, worldLight));
-                o.color = ambient + diffuse;
+                fixed3 worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.worldNormal = worldNormal;
                 return o;
             }
             
             fixed4 frag(v2f i) : SV_TARGET {
-                return fixed4(i.color, 1);
+                fixed3 ambient = UNITY_LIGHTMODEL_AMBIENT.xyz;
+                fixed3 worldNormal = normalize(i.worldNormal);
+                fixed3 worldLight = normalize(_WorldSpaceLightPos0.xyz);
+                fixed halfLambert = dot(worldNormal, worldLight) * 0.5 + 0.5;
+                fixed3 diffuse = _LightColor0.rgb * _Diffuse.rgb * halfLambert;
+                fixed3 color = ambient + diffuse;
+                return fixed4(color, 1.0);
             }
             
             ENDCG
